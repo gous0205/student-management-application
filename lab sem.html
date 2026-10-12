@@ -1,0 +1,440 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Management System</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #eef2ff;
+            margin: 0;
+            padding: 25px;
+            color: #1e293b;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px #00000015;
+        }
+
+        header {
+            text-align: center;
+            background: #1e3a8a;
+            color: white;
+            padding: 22px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+
+        header h1 {
+            margin-top: 0;
+        }
+
+        h2 {
+            color: #1e3a8a;
+            margin-top: 0;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        input:focus {
+            outline: 2px solid #93c5fd;
+        }
+
+        button {
+            border: none;
+            padding: 11px 16px;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 4px 4px 4px 0;
+        }
+
+        .add-btn {
+            background: #2563eb;
+            margin-top: 18px;
+        }
+
+        .download-btn {
+            background: #047857;
+        }
+
+        .delete-btn {
+            background: #dc2626;
+        }
+
+        button:hover {
+            opacity: 0.88;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        #message {
+            margin-top: 12px;
+            font-weight: bold;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            min-width: 600px;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 13px;
+            border: 1px solid #e2e8f0;
+            text-align: left;
+        }
+
+        th {
+            background: #1e3a8a;
+            color: white;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #f1f5f9;
+        }
+
+        .empty-row {
+            text-align: center;
+            color: #64748b;
+        }
+
+        .note {
+            background: #eff6ff;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            header h1 {
+                font-size: 23px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <header>
+        <h1>🎓 Student Management System</h1>
+        <p>Add, view, delete and export student records</p>
+    </header>
+
+    <!-- Student Form -->
+    <section class="section">
+        <h2>Add New Student</h2>
+
+        <form id="studentForm">
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label for="stdId">Student ID</label>
+                    <input type="text" id="stdId"
+                           placeholder="Enter student ID" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="name">Student Name</label>
+                    <input type="text" id="name"
+                           placeholder="Enter student name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="course">Course</label>
+                    <input type="text" id="course"
+                           placeholder="Enter course" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="marks">Marks (0–100)</label>
+                    <input type="number" id="marks"
+                           min="0" max="100"
+                           placeholder="Enter marks" required>
+                </div>
+
+            </div>
+
+            <button type="submit" class="add-btn">
+                + Add Student
+            </button>
+
+            <p id="message" role="status" aria-live="polite"></p>
+        </form>
+    </section>
+
+    <!-- Student Table -->
+    <section class="section">
+        <h2>Student Records</h2>
+
+        <p id="studentCount">Total Students: 0</p>
+
+        <button type="button" id="downloadBtn" class="download-btn">
+            Download students.json
+        </button>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Name</th>
+                        <th>Course</th>
+                        <th>Marks</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody id="studentTable"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <p class="note">
+        <strong>Note:</strong> Student records are kept in browser Local
+        Storage. Click "Download students.json" to export the latest
+        records to a JSON file on your computer.
+    </p>
+
+</div>
+
+<script>
+    const form = document.getElementById("studentForm");
+    const studentTable = document.getElementById("studentTable");
+    const studentCount = document.getElementById("studentCount");
+    const message = document.getElementById("message");
+    const downloadBtn = document.getElementById("downloadBtn");
+
+    // 1. Load existing students from Local Storage
+    let students = [];
+
+    try {
+        const savedData = localStorage.getItem("students");
+        const parsedData = savedData ? JSON.parse(savedData) : [];
+
+        students = Array.isArray(parsedData) ? parsedData : [];
+    } catch (error) {
+        students = [];
+    }
+
+    // 2. Save student data in Local Storage as JSON text
+    function saveStudents() {
+        localStorage.setItem("students", JSON.stringify(students));
+    }
+
+    // 3. Display students dynamically
+    function displayStudents() {
+        studentTable.replaceChildren();
+
+        studentCount.textContent =
+            "Total Students: " + students.length;
+
+        if (students.length === 0) {
+            const row = document.createElement("tr");
+            const cell = document.createElement("td");
+
+            cell.colSpan = 5;
+            cell.className = "empty-row";
+            cell.textContent = "No student records found.";
+
+            row.appendChild(cell);
+            studentTable.appendChild(row);
+            return;
+        }
+
+        students.forEach(function(student) {
+            const row = document.createElement("tr");
+
+            const details = [
+                student.stdId,
+                student.name,
+                student.course,
+                student.marks
+            ];
+
+            details.forEach(function(value) {
+                const cell = document.createElement("td");
+                cell.textContent = value;
+                row.appendChild(cell);
+            });
+
+            const actionCell = document.createElement("td");
+            const deleteBtn = document.createElement("button");
+
+            deleteBtn.textContent = "Delete";
+            deleteBtn.className = "delete-btn";
+
+            deleteBtn.addEventListener("click", function() {
+                deleteStudent(student.stdId);
+            });
+
+            actionCell.appendChild(deleteBtn);
+            row.appendChild(actionCell);
+            studentTable.appendChild(row);
+        });
+    }
+
+    // 4. Add a new student
+    form.addEventListener("submit", function(event) {
+        event.preventDefault();
+
+        const stdId = document.getElementById("stdId").value.trim();
+        const name = document.getElementById("name").value.trim();
+        const course = document.getElementById("course").value.trim();
+        const marksValue = document.getElementById("marks").value;
+        const marks = Number(marksValue);
+
+        if (!stdId || !name || !course || marksValue === "") {
+            message.textContent = "Please fill in all fields.";
+            return;
+        }
+
+        if (!Number.isFinite(marks) || marks < 0 || marks > 100) {
+            message.textContent = "Marks must be between 0 and 100.";
+            return;
+        }
+
+        // Prevent duplicate student IDs
+        const exists = students.some(function(student) {
+            return String(student.stdId).toLowerCase() === stdId.toLowerCase();
+        });
+
+        if (exists) {
+            message.textContent = "Student ID already exists!";
+            return;
+        }
+
+        // Create the student object
+        const student = {
+            stdId: stdId,
+            name: name,
+            course: course,
+            marks: marks
+        };
+
+        students.push(student);
+
+        try {
+            saveStudents();
+            displayStudents();
+            form.reset();
+
+            message.textContent =
+                "Student added successfully! Download JSON to export the records.";
+        } catch (error) {
+            students.pop();
+            message.textContent =
+                "Unable to save data in browser Local Storage.";
+        }
+    });
+
+    // 5. Delete a student
+    function deleteStudent(stdId) {
+        const previousStudents = students;
+
+        students = students.filter(function(student) {
+            return student.stdId !== stdId;
+        });
+
+        try {
+            saveStudents();
+            displayStudents();
+
+            message.textContent =
+                "Student deleted. Download JSON for the updated file.";
+        } catch (error) {
+            students = previousStudents;
+            message.textContent =
+                "Unable to update browser Local Storage.";
+        }
+    }
+
+    // 6. Download current student data as students.json
+    function downloadJSON() {
+        const jsonData = JSON.stringify(students, null, 4);
+
+        const blob = new Blob(
+            [jsonData],
+            { type: "application/json" }
+        );
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = "students.json";
+
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        URL.revokeObjectURL(url);
+
+        message.textContent = "students.json download requested.";
+    }
+
+    downloadBtn.addEventListener("click", downloadJSON);
+
+    // 7. Display saved data when the page opens
+    displayStudents();
+</script>
+
+</body>
+</html>
